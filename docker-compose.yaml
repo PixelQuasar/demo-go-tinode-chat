@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:4.2.3-bionic
+    container_name: mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb:/data/db
+    networks:
+      - app_net
+
+  app:
+    build: .
+    container_name: app
+    ports:
+      - "8081:8080"
+    networks:
+      - app_net
+    depends_on:
+      - mongodb
+      - tinode
+
+  mysql:
+    image: "mysql:8"
+    container_name: mysql
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    restart: always
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - app_net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1" ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+
+
+  tinode:
+    image: tinode/tinode-mysql:0.22.12
+    container_name: tinode
+    ports:
+      - "6060:6060"
+      - "18080:18080"
+    environment:
+      - TINODE_ENV=dev
+      - TINODE_AUTH_HANDLERS=external
+      - TINODE_ALLOW_INSECURE_AUTH=true
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app_net
+
+#  tinode:
+#    image: tinode/tinode-mysql:latest
+#    container_name: tinode
+#    ports:
+#      - "6060:6060"     # HTTP
+#      - "16060:16060"   # WebSocket
+#    environment:
+#      - LOG_LEVEL=debug
+#      - TINODE_AUTH_HANDLERS=external
+#      - TINODE_ALLOW_INSECURE_AUTH=true
+#      - DB_HOST=0.0.0.0
+#      - DB_PORT=27017
+#    networks:
+#      - mongo_net
+#    depends_on:
+#      - mongodb
+#    volumes:
+#      - tinode_data:/data
+
+volumes:
+  db-data:
+  mongodb:
+  tinode_data:
+
+networks:
+  app_net:
+    driver: bridge

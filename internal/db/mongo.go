@@ -2,17 +2,17 @@ package db
 
 import (
 	"context"
+	"demo-go-tinode-chat/config"
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"os"
 )
 
 var UserCollection *mongo.Collection
 var ChatConnection *mongo.Collection
 
 func InitDB() {
-	clientOpts := options.Client().ApplyURI(os.Getenv("MONGO_URI"))
+	clientOpts := options.Client().ApplyURI(config.AppConfig.MongoUri)
 	client, err := mongo.Connect(context.TODO(), clientOpts)
 	if err != nil {
 		panic(err)
@@ -22,6 +22,6 @@ func InitDB() {
 
 	UserCollection = database.Collection("users")
 	ChatConnection = database.Collection("chat")
-	
+
 	fmt.Println("Connected to MongoDB!")
 }

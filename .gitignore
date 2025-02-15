@@ -40,3 +40,7 @@ temp/
 # Personal or system-specific files
 node_modules/
 coverage/
+
+.tinode-chat/
+main
+*.gz

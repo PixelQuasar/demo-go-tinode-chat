@@ -18,12 +18,13 @@ func CreateUser(user models.User) error {
 	user.Password = string(hashedPassword)
 
 	_, err = db.UserCollection.InsertOne(context.TODO(), user)
+
 	return err
 }
 
-func AuthenticateUser(username, password string) (bool, error) {
+func AuthenticateUser(user models.User) (bool, error) {
 	var result models.User
-	err := db.UserCollection.FindOne(context.Background(), bson.M{"username": username}).Decode(&result)
+	err := db.UserCollection.FindOne(context.Background(), bson.M{"username": user.Username}).Decode(&result)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return false, errors.New("invalid username or password")
@@ -31,7 +32,7 @@ func AuthenticateUser(username, password string) (bool, error) {
 		return false, err
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(result.Password), []byte(user.Password)); err != nil {
 		return false, errors.New("invalid username or password")
 	}
 

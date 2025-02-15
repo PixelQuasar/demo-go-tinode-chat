@@ -1,21 +1,22 @@
 package main
 
 import (
-	"demo-go-tinode-chat/internal/common/utils"
+	"demo-go-tinode-chat/config"
 	"demo-go-tinode-chat/internal/db"
-	"demo-go-tinode-chat/internal/routes"
+	"demo-go-tinode-chat/internal/server"
+	"demo-go-tinode-chat/internal/tinode"
 	"fmt"
 	"log"
-	"os"
 )
 
 func main() {
-	utils.LoadEnv()
+	config.LoadConfig()
 	db.InitDB()
+	tinode.InitMessageLoop()
 
-	server := routes.InitRouter()
+	app := server.InitRouter()
 
-	err := server.Run(fmt.Sprintf(":%s", os.Getenv("PORT")))
+	err := app.Run(fmt.Sprintf(":%s", config.AppConfig.Port))
 	if err != nil {
 		log.Fatal("Unable to start:", err)
 	}

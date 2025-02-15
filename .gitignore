@@ -1,0 +1,42 @@
+# IDE and editor specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Compiled binary files
+/bin/
+/pkg/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Log files and outputs
+*.log
+*.out
+
+# Temporary and generated files
+*.tmp
+*.temp
+*.test
+*.bak
+
+# Libraries and build results
+vendor/
+build/
+dist/
+
+# Drafts and temporary directories
+drafts/
+temp/
+
+# Environment and secret configuration files
+.env
+.env.*
+
+# Personal or system-specific files
+node_modules/
+coverage/

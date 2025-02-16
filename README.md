@@ -1,8 +1,10 @@
-gin + mongo real-time chat with Tinode
+# gin + mongo real-time chat with Tinode
 
-Setup instructions:
-## 1. Setup mongo (!IMPORTANT! Due to the requirements of Tinode it is necessary to run Mongo in single-node ReplicaSet mode: https://docs.mongodb.com/manual/administration/replica-set-deployment/)
-Depends on your OS
+# Setup instructions:
+## 1. Setup mongo 
+(!IMPORTANT! Due to the requirements of Tinode it is necessary to run Mongo in single-node ReplicaSet mode: https://docs.mongodb.com/manual/administration/replica-set-deployment/)
+
+Needed steps depend on your OS
 
 ## 2. Create .env config file:
 ```dotenv

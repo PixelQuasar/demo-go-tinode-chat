@@ -22,7 +22,7 @@ All variables have default values (except JWT_SECRET) defined in AppConfig
 go mod tidy
 ```
 
-## 4. Make tinode db connection:
+## 4. Init tinode mongodb connection:
 ```shell
 $GOPATH/bin/tinode-db -config=./tinode-db/tinode.conf 
 ```

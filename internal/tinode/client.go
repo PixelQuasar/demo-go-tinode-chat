@@ -3,31 +3,30 @@ package tinode
 import (
 	"context"
 	"demo-go-tinode-chat/config"
+	"demo-go-tinode-chat/internal/db"
 	"demo-go-tinode-chat/internal/models"
 	"demo-go-tinode-chat/internal/tinode/proto/github.com/tinode/chat/pbx"
 	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
 	"google.golang.org/grpc"
 	"log"
+	"math/rand"
+	"time"
 )
 
 var GeneralMessageLoop *grpc.BidiStreamingClient[pbx.ClientMsg, pbx.ServerMsg]
 
+var generalRoomCreated = false
+
 func InitMessageLoop() {
 	fmt.Println("Connecting to Tinode...")
 
-	conn, err := grpc.Dial(config.AppConfig.TinodeHttpHost, grpc.WithInsecure())
+	conn, err := grpc.Dial(config.AppConfig.TinodeHttpHost, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 
 	fmt.Println("Connected to Tinode!")
-
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatalf("could not close connection: %v", err)
-		}
-	}(conn)
 
 	client := pbx.NewNodeClient(conn)
 
@@ -40,12 +39,58 @@ func InitMessageLoop() {
 
 	fmt.Println("Tinode stream created!")
 
+	//handshake
+	err = stream.Send(&pbx.ClientMsg{
+		Message: &pbx.ClientMsg_Hi{
+			Hi: &pbx.ClientHi{
+				Id:        genMessageId(),
+				UserAgent: "server",
+				Ver:       "0.22.11",
+				Platform:  "server",
+				Lang:      "en-US",
+			},
+		},
+	})
+
+	// create root account
+	err = stream.Send(&pbx.ClientMsg{
+		Message: &pbx.ClientMsg_Acc{
+			Acc: &pbx.ClientAcc{
+				Id:        genMessageId(),
+				UserId:    "newroot",
+				Scheme:    "basic",
+				Secret:    config.AppConfig.JwtKey,
+				AuthLevel: pbx.AuthLevel_ROOT,
+			},
+		},
+	})
+
+	// make account root
+	_, err = db.TinodeAuthCollection.UpdateOne(
+		context.Background(),
+		bson.M{"_id": "basic:server"}, bson.M{"$set": bson.M{"authlvl": 30}},
+	)
+	if err != nil {
+		return
+	}
+
+	// login as root
+	err = stream.Send(&pbx.ClientMsg{
+		Message: &pbx.ClientMsg_Login{
+			Login: &pbx.ClientLogin{
+				Id:     genMessageId(),
+				Scheme: "basic",
+				Secret: config.AppConfig.JwtKey,
+			},
+		},
+	})
+
 	// create general room
 	err = stream.Send(&pbx.ClientMsg{
-		Message: &pbx.ClientMsg_Set{
-			Set: &pbx.ClientSet{
+		Message: &pbx.ClientMsg_Sub{
+			Sub: &pbx.ClientSub{
 				Id:    genMessageId(),
-				Topic: "general",
+				Topic: "newgeneral",
 			},
 		},
 	})
@@ -59,39 +104,14 @@ func InitMessageLoop() {
 	GeneralMessageLoop = &stream
 }
 
-func CreateTinodeUser(user models.User, token string) error {
-	// initialize user
+func CreateTinodeUser(user models.User) error {
 	err := (*GeneralMessageLoop).Send(&pbx.ClientMsg{
 		Message: &pbx.ClientMsg_Acc{
 			Acc: &pbx.ClientAcc{
 				Id:     genMessageId(),
-				UserId: user.ID,
-				Scheme: "basic",
-				Login:  true,
-				Secret: config.AppConfig.JwtKey,
-			},
-		},
-	})
-
-	// subscribe user
-	err = (*GeneralMessageLoop).Send(&pbx.ClientMsg{
-		Message: &pbx.ClientMsg_Sub{
-			Sub: &pbx.ClientSub{
-				Id:    genMessageId(),
-				Topic: "general",
-			},
-		},
-	})
-	return err
-}
-
-func LoginTinodeUser(user models.User, token string) error {
-	err := (*GeneralMessageLoop).Send(&pbx.ClientMsg{
-		Message: &pbx.ClientMsg_Login{
-			Login: &pbx.ClientLogin{
-				Id:     genMessageId(),
-				Scheme: "basic",
-				Secret: config.AppConfig.JwtKey,
+				UserId: user.Username,
+				Scheme: "anon",
+				Secret: []byte(fmt.Sprintf("%s:%s", user.Username, user.Password)),
 			},
 		},
 	})
@@ -114,6 +134,10 @@ func SendMessage(content string, user string) error {
 var idInc = 0
 
 func genMessageId() string {
-	idInc++
+	// generate random int
+	rand.Seed(time.Now().UnixNano())
+
+	idInc = rand.Intn(0xffffffff)
+
 	return fmt.Sprintf("%d", idInc)
 }

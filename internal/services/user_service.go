@@ -4,6 +4,7 @@ import (
 	"context"
 	"demo-go-tinode-chat/internal/db"
 	"demo-go-tinode-chat/internal/models"
+	"demo-go-tinode-chat/internal/tinode"
 	"errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,9 +16,19 @@ func CreateUser(user models.User) error {
 	if err != nil {
 		return err
 	}
+
+	err = tinode.CreateTinodeUser(models.User{
+		Username: user.Username,
+		Password: user.Password,
+	})
+
 	user.Password = string(hashedPassword)
 
 	_, err = db.UserCollection.InsertOne(context.TODO(), user)
+
+	if err != nil {
+		return err
+	}
 
 	return err
 }

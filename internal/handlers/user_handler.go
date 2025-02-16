@@ -4,7 +4,6 @@ import (
 	"demo-go-tinode-chat/internal/common/utils"
 	"demo-go-tinode-chat/internal/models"
 	"demo-go-tinode-chat/internal/services"
-	"demo-go-tinode-chat/internal/tinode"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -65,12 +64,6 @@ func LoginHandler(c *gin.Context) {
 	token, err := utils.GenerateToken(user.Username)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error generating token"})
-		return
-	}
-
-	err = tinode.CreateTinodeUser(user, token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error creating Tinode user"})
 		return
 	}
 

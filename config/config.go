@@ -16,7 +16,6 @@ type Config struct {
 	JwtKey               []byte
 	MessagesPageSize     int64
 	TinodeHttpHost       string
-	TinodeWsHost         string
 }
 
 var AppConfig Config
@@ -40,10 +39,9 @@ func LoadConfig() {
 		DbName:               getEnvWithFallback("DB_NAME", "tinode_chat"),
 		JwtSecret:            getEnvWithFallback("JWT_SECRET", "tinode"),
 		JwtExpirationMinutes: jwtExpirationMinutes,
-		JwtKey:               []byte(getEnvWithFallback("JWT_SECRET", "tinode")),
+		JwtKey:               []byte(os.Getenv("JWT_SECRET")),
 		MessagesPageSize:     messagesPageSize,
 		TinodeHttpHost:       getEnvWithFallback("TINODE_HTTP_HOST", "localhost:16060"),
-		TinodeWsHost:         getEnvWithFallback("TINODE_WS_HOST", "localhost:16060"),
 	}
 }
 

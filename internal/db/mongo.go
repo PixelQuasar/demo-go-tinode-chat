@@ -10,6 +10,7 @@ import (
 
 var UserCollection *mongo.Collection
 var ChatConnection *mongo.Collection
+var TinodeAuthCollection *mongo.Collection
 
 func InitDB() {
 	clientOpts := options.Client().ApplyURI(config.AppConfig.MongoUri)
@@ -22,6 +23,7 @@ func InitDB() {
 
 	UserCollection = database.Collection("users")
 	ChatConnection = database.Collection("chat")
+	TinodeAuthCollection = database.Collection("auth")
 
 	fmt.Println("Connected to MongoDB!")
 }

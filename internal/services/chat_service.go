@@ -6,6 +6,7 @@ import (
 	"demo-go-tinode-chat/internal/common/utils"
 	"demo-go-tinode-chat/internal/db"
 	"demo-go-tinode-chat/internal/models"
+	"demo-go-tinode-chat/internal/tinode"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -28,6 +29,11 @@ func CreateMessage(content string, userToken string) error {
 	}
 
 	_, err = db.ChatConnection.InsertOne(context.TODO(), message)
+	if err != nil {
+		return err
+	}
+
+	err = tinode.SendMessage(content, username)
 	return err
 }
 
